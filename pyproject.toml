@@ -15,6 +15,7 @@ asyncpg = "^0.29.0"
 alembic = "^1.13.1"
 black = {extras = ["d"], version = "^24.2.0"}
 pydantic-settings = "^2.2.1"
+asyncio = "^3.4.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.2"
