@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import String, text
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from model.database import Base
@@ -26,3 +26,9 @@ class ShiftTask(Base):
 
 class UniqueProductIdentifiers(Base):
     __tablename__ = "unique_product_identifiers"
+
+    unique_product_code: Mapped[str] = mapped_column(String(100), unique=True)
+    party_number: Mapped[str] = mapped_column(ForeignKey("shift_tasks.party_number"))
+    party_data: Mapped[datetime.date] = mapped_column(ForeignKey("shift_tasks.party_data"))
+    is_aggregated: Mapped[bool] = mapped_column(default=False)
+    aggregated_at: Mapped[datetime.datetime] = mapped_column(default=None)
