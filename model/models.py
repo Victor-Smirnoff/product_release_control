@@ -13,12 +13,12 @@ class ShiftTask(Base):
     )
 
     closing_status: Mapped[bool]
-    closed_at: Mapped[datetime.time] = mapped_column(default=None)
+    closed_at: Mapped[datetime.time | None] = mapped_column(default=None)
     view_task_to_shift: Mapped[str] = mapped_column(String(100))
     work_center: Mapped[str] = mapped_column(String(100))
     shift: Mapped[str] = mapped_column(String(100))
     team: Mapped[str] = mapped_column(String(100))
-    party_number: Mapped[int] = mapped_column(unique=True)
+    party_number: Mapped[int]
     party_data: Mapped[datetime.date]
     nomenclature: Mapped[str] = mapped_column(String(100))
     code_ekn: Mapped[str] = mapped_column(String(100))
