@@ -15,7 +15,7 @@ class ShiftTask(Base):
     closing_status: Mapped[bool]
     closed_at: Mapped[datetime.time | None] = mapped_column(default=None)
     view_task_to_shift: Mapped[str] = mapped_column(String(100))
-    work_center: Mapped[str] = mapped_column(String(100))
+    work_center: Mapped[str] = mapped_column(String(100), default="Какой-то рабочий центр")
     shift: Mapped[str] = mapped_column(String(100))
     team: Mapped[str] = mapped_column(String(100))
     party_number: Mapped[int]
