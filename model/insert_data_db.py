@@ -1,8 +1,11 @@
 import asyncio
 import datetime
+
+from sqlalchemy import select, and_
+
 from model.database import Base, db_helper
-from model.models import ShiftTask
-from model.static_data_for_db import shift_tasks
+from model.models import ShiftTask, UniqueProductIdentifiers
+from model.static_data_for_db import shift_tasks, unique_product_identifiers
 
 
 engine = db_helper.engine
@@ -44,8 +47,10 @@ class CreateTablesDataBase:
                 nomenclature=task["Номенклатура"],
                 code_ekn=task["КодЕКН"],
                 id_of_the_rc=task["ИдентификаторРЦ"],
-                date_time_shift_start=datetime.datetime.fromisoformat(task["ДатаВремяНачалаСмены"]).replace(tzinfo=None),
-                date_time_shift_end=datetime.datetime.fromisoformat(task["ДатаВремяОкончанияСмены"]).replace(tzinfo=None),
+                date_time_shift_start=datetime.datetime.fromisoformat(
+                    task["ДатаВремяНачалаСмены"]).replace(tzinfo=None),
+                date_time_shift_end=datetime.datetime.fromisoformat(
+                    task["ДатаВремяОкончанияСмены"]).replace(tzinfo=None),
             )
             for task in shift_tasks
         ]
@@ -54,6 +59,46 @@ class CreateTablesDataBase:
             session.add_all(task_list)
             await session.commit()
 
+    async def insert_data_unique_product_identifiers(self):
+        unique_product_identifier_list = []
+
+        for product_identifier in unique_product_identifiers:
+            party_number = product_identifier["НомерПартии"]
+            party_data = datetime.datetime.strptime(product_identifier["ДатаПартии"], "%Y-%m-%d").date()
+
+            shift_task = await self.find_unique_shift_task(
+                party_number=party_number,
+                party_data=party_data,
+            )
+
+            if type(shift_task) is ShiftTask:
+                new_product = UniqueProductIdentifiers(
+                    unique_product_code=product_identifier["УникальныйКодПродукта"],
+                    shift_task_id=shift_task.id,
+                    is_aggregated=False,
+                    aggregated_at=None
+                )
+                unique_product_identifier_list.append(new_product)
+
+        if unique_product_identifier_list:
+            async with session_factory() as session:
+                session.add_all(unique_product_identifier_list)
+                await session.commit()
+        else:
+            print("unique_product_identifier_list пустой вышел!!!!")
+
+    @staticmethod
+    async def find_unique_shift_task(party_number: int, party_data: datetime.date) -> ShiftTask | None:
+        async with session_factory() as session:
+            query = select(ShiftTask).where(and_(
+                ShiftTask.party_number == party_number,
+                ShiftTask.party_data == party_data
+                )
+            )
+            result = await session.execute(query)
+            shift_task = result.scalars().one()
+            return shift_task if shift_task else None
+
     async def main(self):
         """
         Метод запускает все необходимые методы для первоначальной инициализации таблиц БД и их наполнения
@@ -61,6 +106,7 @@ class CreateTablesDataBase:
         """
         await self.create_tables()
         await self.insert_data_shift_tasks()
+        await self.insert_data_unique_product_identifiers()
 
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ from model.database import Base
 class ShiftTask(Base):
     __tablename__ = "shift_tasks"
     __table_args__ = (
-        UniqueConstraint("party_number", "party_data"),
+        UniqueConstraint("party_number", "party_data", name="unique_shift_task"),
     )
 
     closing_status: Mapped[bool]
@@ -33,4 +33,4 @@ class UniqueProductIdentifiers(Base):
     unique_product_code: Mapped[str] = mapped_column(String(100), unique=True)
     shift_task_id: Mapped[int] = mapped_column(ForeignKey("shift_tasks.id"))
     is_aggregated: Mapped[bool] = mapped_column(default=False)
-    aggregated_at: Mapped[datetime.datetime] = mapped_column(default=None)
+    aggregated_at: Mapped[datetime.datetime | None] = mapped_column(default=None)
