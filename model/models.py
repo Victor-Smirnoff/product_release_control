@@ -1,13 +1,16 @@
 import datetime
 
-from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from model.database import Base
 
 
 class ShiftTask(Base):
     __tablename__ = "shift_tasks"
+    __table_args__ = (
+        UniqueConstraint("party_number", "party_data"),
+    )
 
     closing_status: Mapped[bool]
     closed_at: Mapped[datetime.time] = mapped_column(default=None)
@@ -15,7 +18,7 @@ class ShiftTask(Base):
     work_center: Mapped[str] = mapped_column(String(100))
     shift: Mapped[str] = mapped_column(String(100))
     team: Mapped[str] = mapped_column(String(100))
-    party_number: Mapped[int]
+    party_number: Mapped[int] = mapped_column(unique=True)
     party_data: Mapped[datetime.date]
     nomenclature: Mapped[str] = mapped_column(String(100))
     code_ekn: Mapped[str] = mapped_column(String(100))
@@ -28,7 +31,6 @@ class UniqueProductIdentifiers(Base):
     __tablename__ = "unique_product_identifiers"
 
     unique_product_code: Mapped[str] = mapped_column(String(100), unique=True)
-    party_number: Mapped[str] = mapped_column(ForeignKey("shift_tasks.party_number"))
-    party_data: Mapped[datetime.date] = mapped_column(ForeignKey("shift_tasks.party_data"))
+    shift_task_id: Mapped[int] = mapped_column(ForeignKey("shift_tasks.id"))
     is_aggregated: Mapped[bool] = mapped_column(default=False)
     aggregated_at: Mapped[datetime.datetime] = mapped_column(default=None)
