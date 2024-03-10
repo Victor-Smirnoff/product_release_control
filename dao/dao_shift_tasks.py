@@ -26,3 +26,22 @@ class DaoShiftTaskRepository:
         except SQLAlchemyError:
             response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
+
+    @staticmethod
+    async def find_by_id(session: AsyncSession, shift_task_id: int) -> ShiftTask | ErrorResponse:
+        """
+        Метод возвращает найденный объект класса ShiftTask если он найден в БД, иначе объект ErrorResponse
+        :param session: объект асинхронной сессии AsyncSession
+        :param shift_task_id: айди сменного задания
+        :return: объект класса ShiftTask или ErrorResponse
+        """
+        try:
+            currency = await session.get(ShiftTask, shift_task_id)
+            if isinstance(currency, ShiftTask):
+                return currency
+            else:
+                response = ErrorResponse(code=404, message=f"Сменное задание с id {shift_task_id} не найдено")
+                return response
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
+            return response
