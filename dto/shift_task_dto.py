@@ -15,5 +15,5 @@ class ShiftTaskDTO(BaseModel):
     nomenclature: str = Field(..., validation_alias="Номенклатура")
     code_ekn: str = Field(..., validation_alias="КодЕКН")
     id_of_the_rc: str = Field(..., validation_alias="ИдентификаторРЦ")
-    date_time_shift_start: datetime.datetime = Field(..., validation_alias="ИдентификаторРЦ")
-    date_time_shift_end: datetime.datetime = Field(..., validation_alias="ИдентификаторРЦ")
+    date_time_shift_start: datetime.datetime = Field(..., validation_alias="ДатаВремяНачалаСмены")
+    date_time_shift_end: datetime.datetime = Field(..., validation_alias="ДатаВремяОкончанияСмены")
