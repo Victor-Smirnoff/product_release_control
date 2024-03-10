@@ -21,8 +21,8 @@ class DaoShiftTaskRepository:
         try:
             stmt = select(ShiftTask).order_by(ShiftTask.id)
             result: Result = await session.execute(stmt)
-            list_all_currencies = result.scalars().all()
-            return list(list_all_currencies)
+            list_all_shift_tasks = result.scalars().all()
+            return list(list_all_shift_tasks)
         except SQLAlchemyError:
             response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
@@ -36,9 +36,9 @@ class DaoShiftTaskRepository:
         :return: объект класса ShiftTask или ErrorResponse
         """
         try:
-            currency = await session.get(ShiftTask, shift_task_id)
-            if isinstance(currency, ShiftTask):
-                return currency
+            shift_task = await session.get(ShiftTask, shift_task_id)
+            if isinstance(shift_task, ShiftTask):
+                return shift_task
             else:
                 response = ErrorResponse(code=404, message=f"Сменное задание с id {shift_task_id} не найдено")
                 return response

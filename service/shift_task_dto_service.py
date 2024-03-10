@@ -4,7 +4,8 @@ from model import ShiftTask
 
 class ShiftTaskDtoService:
 
-    def get_shift_task_dto(self, shift_task: ShiftTask) -> ShiftTaskDTO:
+    @staticmethod
+    def get_shift_task_dto(shift_task: ShiftTask) -> ShiftTaskDTO:
 
         shift_task_dto = ShiftTaskDTO(
             closing_status=shift_task.closing_status,
