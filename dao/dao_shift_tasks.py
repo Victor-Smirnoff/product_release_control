@@ -1,5 +1,5 @@
 from sqlalchemy import Result, select, and_
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 import datetime
 from dto import ErrorResponse
@@ -139,3 +139,100 @@ class DaoShiftTaskRepository:
         except SQLAlchemyError:
             response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
+
+    async def create_shift_task(
+        self,
+        session: AsyncSession,
+        closing_status: bool,
+        view_task_to_shift: str,
+        line: str,
+        shift: str,
+        team: str,
+        party_number: int,
+        party_data: datetime.date,
+        nomenclature: str,
+        code_ekn: str,
+        id_of_the_rc: str,
+        date_time_shift_start: datetime.datetime,
+        date_time_shift_end: datetime.datetime,
+    ) -> ShiftTask | ErrorResponse:
+        """
+        Метод записывает новое сменное задание в БД
+        :param session: объект асинхронной сессии AsyncSession
+        :param closing_status: СтатусЗакрытия
+        :param view_task_to_shift: ПредставлениеЗаданияНаСмену
+        :param line: Линия
+        :param shift: Смена
+        :param team: Бригада
+        :param party_number: НомерПартии
+        :param party_data: ДатаПартии
+        :param nomenclature: Номенклатура
+        :param code_ekn: КодЕКН
+        :param id_of_the_rc: ИдентификаторРЦ
+        :param date_time_shift_start: ДатаВремяНачалаСмены
+        :param date_time_shift_end: ДатаВремяОкончанияСмены
+        :return: объект класса ShiftTask | ErrorResponse
+        """
+
+        shift_task = await self.find_by_party_number_and_party_data(
+            session=session,
+            party_number=party_number,
+            party_data=party_data,
+        )
+
+        if isinstance(shift_task, ShiftTask):
+            update_data = {
+                "СтатусЗакрытия": closing_status,
+                "ПредставлениеЗаданияНаСмену": view_task_to_shift,
+                "Линия": line,
+                "Смена": shift,
+                "Бригада": team,
+                "НомерПартии": party_number,
+                "ДатаПартии": party_data,
+                "Номенклатура": nomenclature,
+                "КодЕКН": code_ekn,
+                "ИдентификаторРЦ": id_of_the_rc,
+                "ДатаВремяНачалаСмены": date_time_shift_start,
+                "ДатаВремяОкончанияСмены": date_time_shift_end,
+            }
+
+            shift_task_to_return = await self.update_shift_task(
+                session=session,
+                shift_task_id=shift_task.id,
+                update_data=update_data,
+            )
+
+            return shift_task_to_return
+
+        else:
+            try:
+                new_shift_task = ShiftTask(
+                    closing_status=closing_status,
+                    view_task_to_shift=view_task_to_shift,
+                    line=line,
+                    shift=shift,
+                    team=team,
+                    party_number=party_number,
+                    party_data=party_data,
+                    nomenclature=nomenclature,
+                    code_ekn=code_ekn,
+                    id_of_the_rc=id_of_the_rc,
+                    date_time_shift_start=date_time_shift_start,
+                    date_time_shift_end=date_time_shift_end,
+                )
+
+                session.add(new_shift_task)
+                try:
+                    await session.commit()
+                    await session.refresh(new_shift_task)
+                    return new_shift_task
+                except IntegrityError:
+                    response = ErrorResponse(
+                        code=409,
+                        message=f"Пара НомерПартии {party_number} и ДатаПартии {party_data} всегда уникальна!"
+                    )
+                    return response
+
+            except SQLAlchemyError:
+                response = ErrorResponse(code=500, message=f"База данных недоступна")
+                return response
