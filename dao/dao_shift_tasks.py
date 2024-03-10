@@ -2,6 +2,7 @@ from sqlalchemy import Result, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dto import ErrorResponse
 from model.models import ShiftTask
 
 
