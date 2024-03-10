@@ -1,4 +1,4 @@
-from sqlalchemy import Result, select
+from sqlalchemy import Result, select, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 import datetime
@@ -46,11 +46,12 @@ class DaoShiftTaskRepository:
             response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
 
-    async def update_shift_task(self,
-                                session: AsyncSession,
-                                shift_task_id: int,
-                                update_data: dict
-                                ) -> ShiftTask | ErrorResponse:
+    async def update_shift_task(
+        self,
+        session: AsyncSession,
+        shift_task_id: int,
+        update_data: dict
+    ) -> ShiftTask | ErrorResponse:
         """
         Метод изменяет существующий объект класса ShiftTask.
         Возвращает объект класса ShiftTask если он найден в БД и успешно изменен, иначе объект ErrorResponse
@@ -89,11 +90,11 @@ class DaoShiftTaskRepository:
             shift_task.id_of_the_rc = update_data["id_of_the_rc"] if "id_of_the_rc" in update_data \
                 else shift_task.id_of_the_rc
 
-            shift_task.date_time_shift_start = update_data["date_time_shift_start"] if ("date_time_shift_start"
-                in update_data) else shift_task.date_time_shift_start
+            shift_task.date_time_shift_start = update_data["date_time_shift_start"] \
+                if ("date_time_shift_start" in update_data) else shift_task.date_time_shift_start
 
-            shift_task.date_time_shift_end = update_data["date_time_shift_end"] if ("date_time_shift_end"
-                in update_data) else shift_task.date_time_shift_end
+            shift_task.date_time_shift_end = update_data["date_time_shift_end"] \
+                if ("date_time_shift_end" in update_data) else shift_task.date_time_shift_end
 
             session.add(shift_task)
             await session.commit()
@@ -101,4 +102,40 @@ class DaoShiftTaskRepository:
 
         else:
             response = ErrorResponse(code=404, message=f"Сменное задание с id {shift_task_id} не найдено")
+            return response
+
+    @staticmethod
+    async def find_by_party_number_and_party_data(
+        session: AsyncSession,
+        party_number: int,
+        party_data: datetime.date
+    ) -> ShiftTask | ErrorResponse:
+        """
+        Метод находит объект класса ShiftTask по двум параметрам: НомерПартии и ДатаПартии.
+        Возвращает объект класса ShiftTask если он найден в БД, иначе объект ErrorResponse
+        :param session: объект асинхронной сессии AsyncSession
+        :param party_number: НомерПартии
+        :param party_data: ДатаПартии
+        :return: объект класса ShiftTask или ErrorResponse
+        """
+        try:
+            stmt = select(ShiftTask).where(and_(
+                ShiftTask.party_number == party_number,
+                ShiftTask.party_data == party_data
+            ))
+
+            result: Result = await session.execute(stmt)
+            if isinstance(result, Result):
+                shift_task = result.scalar()
+                if isinstance(shift_task, ShiftTask):
+                    return shift_task
+                else:
+                    response = ErrorResponse(
+                        code=404,
+                        message=f"Сменное задание НомерПартии {party_number} и ДатаПартии {party_data} не найдено"
+                    )
+                    return response
+
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
