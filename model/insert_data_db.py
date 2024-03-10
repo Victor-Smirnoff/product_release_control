@@ -40,6 +40,7 @@ class CreateTablesDataBase:
                 closing_status=task["СтатусЗакрытия"],
                 view_task_to_shift=task["ПредставлениеЗаданияНаСмену"],
                 work_center=task["РабочийЦентр"],
+                line=task["Линия"],
                 shift=task["Смена"],
                 team=task["Бригада"],
                 party_number=task["НомерПартии"],
