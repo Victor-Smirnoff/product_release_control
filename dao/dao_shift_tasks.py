@@ -236,3 +236,51 @@ class DaoShiftTaskRepository:
             except SQLAlchemyError:
                 response = ErrorResponse(code=500, message=f"База данных недоступна")
                 return response
+
+    async def find_by_several_params(
+        self,
+        session: AsyncSession,
+        several_params: dict,
+    ) -> list[ShiftTask] | ErrorResponse:
+        """
+        Метод находит объекты класса ShiftTask по нескольким параметрам.
+        Возвращает список объектов класса ShiftTask если хотя бы один найден в БД, иначе объект ErrorResponse
+        :param session: объект асинхронной сессии AsyncSession
+        :param several_params: словарь с параметрами поискового запроса
+        :return: list объектов класса ShiftTask или ErrorResponse
+        """
+
+        #  данное решение не является оптимальным с точки зрения использования памяти
+        #  так как из БД берутся все записи, а после происходит их фильтрация python методами
+        #  есть над чем подумать, чтобы фильтрация происходила сразу на уровне БД
+
+        results = await self.find_all(session=session)
+
+        if isinstance(results, list):
+
+            #  немного хардкодинга
+
+            if "closing_status" in several_params:
+                results = [task for task in results if task.closing_status == several_params["closing_status"]]
+            if "party_number" in several_params:
+                results = [task for task in results if task.party_number == several_params["party_number"]]
+            if "party_data" in several_params:
+                results = [task for task in results if task.party_data == several_params["party_data"]]
+            if "shift" in several_params:
+                results = [task for task in results if task.shift == several_params["shift"]]
+            if "team" in several_params:
+                results = [task for task in results if task.team == several_params["team"]]
+            if "nomenclature" in several_params:
+                results = [task for task in results if task.nomenclature == several_params["nomenclature"]]
+            if "code_ekn" in several_params:
+                results = [task for task in results if task.code_ekn == several_params["code_ekn"]]
+            if "id_of_the_rc" in several_params:
+                results = [task for task in results if task.id_of_the_rc == several_params["id_of_the_rc"]]
+            if "date_time_shift_start" in several_params:
+                results = [task for task in results
+                           if task.date_time_shift_start == several_params["date_time_shift_start"]]
+            if "date_time_shift_end" in several_params:
+                results = [task for task in results
+                           if task.date_time_shift_end == several_params["date_time_shift_end"]]
+
+        return results

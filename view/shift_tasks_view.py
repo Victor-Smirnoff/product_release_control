@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Path, Depends
+from fastapi import APIRouter, Path, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 import datetime
 from dao import DaoShiftTaskRepository
@@ -46,6 +46,7 @@ async def update_shift_task_by_id(
             status_code=response.code
         )
 
+
 @router.post("/shift_task", status_code=201)
 async def add_shift_task(
     shift_task_list: list[dict],
@@ -81,3 +82,58 @@ async def add_shift_task(
             )
 
     return task_list_to_return
+
+
+@router.get("/shift_task")
+async def get_shift_task_by_several_params(
+        closing_status: bool = Query(None),
+        party_number: int = Query(None),
+        party_data: datetime.date = Query(None),
+        shift: str = Query(None, min_length=1, max_length=100),
+        team: str = Query(None, min_length=1, max_length=100),
+        nomenclature: str = Query(None, min_length=1, max_length=100),
+        code_ekn: str = Query(None, min_length=1, max_length=100),
+        id_of_the_rc: str = Query(None, min_length=1, max_length=100),
+        date_time_shift_start: datetime.datetime = Query(None),
+        date_time_shift_end: datetime.datetime = Query(None),
+        session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    several_params = {}
+    #  тоже немного хардкодинга
+    if closing_status is not None:
+        several_params["closing_status"] = closing_status
+    if party_number is not None:
+        several_params["party_number"] = party_number
+    if party_data is not None:
+        several_params["party_data"] = party_data
+    if shift is not None:
+        several_params["shift"] = shift
+    if team is not None:
+        several_params["team"] = team
+    if nomenclature is not None:
+        several_params["nomenclature"] = nomenclature
+    if code_ekn is not None:
+        several_params["code_ekn"] = code_ekn
+    if id_of_the_rc is not None:
+        several_params["id_of_the_rc"] = id_of_the_rc
+    if date_time_shift_start is not None:
+        several_params["date_time_shift_start"] = date_time_shift_start
+    if date_time_shift_end is not None:
+        several_params["date_time_shift_end"] = date_time_shift_end
+
+    response = await dao_obj.find_by_several_params(
+        session=session,
+        several_params=several_params
+    )
+
+    if isinstance(response, list):
+        task_list_to_return = []
+        for task in response:
+            shift_task = dto_obj.get_shift_task_dto(task)
+            task_list_to_return.append(shift_task)
+        return task_list_to_return
+    else:
+        raise ShiftTaskException(
+            message=response.message,
+            status_code=response.code
+        )
