@@ -86,17 +86,19 @@ async def add_shift_task(
 
 @router.get("/shift_task")
 async def get_shift_task_by_several_params(
-        closing_status: bool = Query(None),
-        party_number: int = Query(None),
-        party_data: datetime.date = Query(None),
-        shift: str = Query(None, min_length=1, max_length=100),
-        team: str = Query(None, min_length=1, max_length=100),
-        nomenclature: str = Query(None, min_length=1, max_length=100),
-        code_ekn: str = Query(None, min_length=1, max_length=100),
-        id_of_the_rc: str = Query(None, min_length=1, max_length=100),
-        date_time_shift_start: datetime.datetime = Query(None),
-        date_time_shift_end: datetime.datetime = Query(None),
-        session: AsyncSession = Depends(db_helper.session_dependency),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=10, le=100),
+    closing_status: bool = Query(None),
+    party_number: int = Query(None),
+    party_data: datetime.date = Query(None),
+    shift: str = Query(None, min_length=1, max_length=100),
+    team: str = Query(None, min_length=1, max_length=100),
+    nomenclature: str = Query(None, min_length=1, max_length=100),
+    code_ekn: str = Query(None, min_length=1, max_length=100),
+    id_of_the_rc: str = Query(None, min_length=1, max_length=100),
+    date_time_shift_start: datetime.datetime = Query(None),
+    date_time_shift_end: datetime.datetime = Query(None),
+    session: AsyncSession = Depends(db_helper.session_dependency),
 ):
     several_params = {}
     #  тоже немного хардкодинга
@@ -131,7 +133,10 @@ async def get_shift_task_by_several_params(
         for task in response:
             shift_task = dto_obj.get_shift_task_dto(task)
             task_list_to_return.append(shift_task)
-        return task_list_to_return
+
+        start = offset
+        end = offset + limit
+        return task_list_to_return[start:end]
     else:
         raise ShiftTaskException(
             message=response.message,
