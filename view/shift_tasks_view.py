@@ -16,10 +16,27 @@ dto_obj = ShiftTaskDtoService()
 
 @router.get("/shift_task/{shift_task_id}")
 async def get_shift_task_by_id(
-        shift_task_id: Annotated[int, Path()],
-        session: AsyncSession = Depends(db_helper.session_dependency),
+    shift_task_id: Annotated[int, Path()],
+    session: AsyncSession = Depends(db_helper.session_dependency),
 ):
     response = await dao_obj.find_by_id(session=session, shift_task_id=shift_task_id)
+    if isinstance(response, ShiftTask):
+        shift_task = dto_obj.get_shift_task_dto(response)
+        return shift_task
+    else:
+        raise ShiftTaskException(
+            message=response.message,
+            status_code=response.code
+        )
+
+
+@router.put("/shift_task/{shift_task_id}")
+async def update_shift_task_by_id(
+    shift_task_id: Annotated[int, Path()],
+    update_data: dict,
+    session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    response = await dao_obj.update_shift_task(session=session, shift_task_id=shift_task_id, update_data=update_data)
     if isinstance(response, ShiftTask):
         shift_task = dto_obj.get_shift_task_dto(response)
         return shift_task
